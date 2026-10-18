@@ -15,6 +15,7 @@
           numpy
           ipykernel
           jupyter
+          scipy
         ]);
       in {
         devShells.default = pkgs.mkShell {
