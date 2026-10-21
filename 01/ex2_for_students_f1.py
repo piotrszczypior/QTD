@@ -138,9 +138,9 @@ def solveA(x, n, k=1, select_mode=0):
     # If yes, then your mode is normalized! Great job.
 
     if 0: 
-        print("Is the length of e_vector_norm equal to len(x): ", len(x) == len(e_vector_norm))
+        print("Is the length of e_vector_norm equal to len(x): ", len(x) == len(e_vector_norm)) # yes
         integral = np.sum(np.abs(e_vector_norm)**2) * dx
-        print("Does the following integral give 1?", int(integral) == 1)
+        print("Does the following integral give 1?", int(integral) == 1) # yes
 
     return beta, e_vector_norm
 
@@ -157,37 +157,44 @@ print(E1)
 print(len(E1))
 
 neff1 = beta1 / k0
-print("N eff1 = ", neff1)
+print("Effective index E1 = ", neff1)
 
-if 0: 
+if 1: 
     beta1, E1 = solveA(x, n1, k=5, select_mode=0)
     neff1 = beta1 / k0
     print(f"Mode {0} N eff1 = ", neff1)
+    plot_mode(x, n1, E1)
 
     beta1, E1 = solveA(x, n1, k=5, select_mode=1)
     neff1 = beta1 / k0
     print("Mode 1 N eff1 = ", neff1)
+    plot_mode(x, n1, E1)
 
     beta1, E1 = solveA(x, n1, k=5, select_mode=2)
     neff1 = beta1 / k0
     print("Mode 2 N eff1 = ", neff1)
+    plot_mode(x, n1, E1)
 
     beta1, E1 = solveA(x, n1, k=5, select_mode=3)
     neff1 = beta1 / k0
     print("Mode 3 N eff1 = ", neff1)
+    plot_mode(x, n1, E1)
 
     beta1, E1 = solveA(x, n1, k=5, select_mode=4)
     neff1 = beta1 / k0
     print("Mode 4 N eff1 = ", neff1)
+    plot_mode(x, n1, E1)
 
 
-plot_mode(x, n1, E1)
+if 0:
+    plot_mode(x, n1, E1)
 
-# How many guided TE modes are supported? 
-# - Supported are: 0 and 1.
+# Q: 3.d How many guided TE modes are supported? 
+# A: Supported are: 0 and 1.
 # 
 # How do the field profiles change with mode order?
-# 
+# With increasing mode, the effective index decreases, so the evanescent tail reaches more to the air 
+# and larger part of field is outside of wave guide. 
 
 # exit()  # Exit just tells Python to stop here; useful while you are working.
 
@@ -197,7 +204,7 @@ plot_mode(x, n1, E1)
 # =============================================================================
 # Put to 1 when working on this task. Put back to 0 at later tasks if you
 # don't want to run this part every single time.
-if 0:
+if 1:
     widths = np.linspace(100, 600, 10) * 1e-9
     neff_arr = np.zeros(len(widths))
 
@@ -217,6 +224,12 @@ if 0:
     plt.tight_layout()
     plt.show()
 
+# Q 4.c  What relation do you observe between the waveguide width and the effective index? 
+# A: Exponential increases of effective index in respect of wave width toward 3.5.
+# 
+# How can you explain it physically?
+# A wider wideguide the more of the mode inside it is confined by material. 
+# The lower the width of waveguide the more field is in evanescent tail.
 
 # =============================================================================
 # TASK 5 — What fraction of |E|^2 is outside the first waveguide?
@@ -225,7 +238,7 @@ if 0:
 # Hint: identify the points outside the core, then integrate the intensity
 # there. Remember, you already normalized the mode.
 
-if 0: 
+if 1: 
     print(E1.shape)
     print(E1)
 
@@ -263,6 +276,9 @@ if 0:
     plt.tight_layout()
     plt.show()
 
+# Q: 5.d  How does this fraction change with width? How is this related to the effective-index trend in Task 4?
+# A: Franction of field in evanescent space decreases with width of waveguide. It is the opposite of effective index. The wider the wave guide the less field is outside it. 
+
 # air = n1 == n_air
 # fraction_outside = np.sum(np.abs(E1[air])**2) * 5e-9
 # print(fraction_outside)
@@ -276,8 +292,15 @@ wg2_center = 300e-9
 # Build n2, then use your solver to get beta2 and E2.
 n2 = make_n_step_profile(x, wg2_center, wg_width)
 beta2, E2 = solveA(x, n2)
-plot_mode(x, n2, E2)
+if 1:
+    plot_mode(x, n2, E2)
 
+print("Effective index E2: ", beta2 / k0)
+
+# Q: 6c Compare the mode profile and effective index with those of the first waveguide. What changes, and why?
+# A; Effective index and the mode profiles between two wave guides remains the same, 
+# only the second wave guide is shifted because both waveguides have the same width.
+exit()
 
 # =============================================================================
 # TASK 7 — Implement the coupling coefficient kappa
@@ -295,13 +318,16 @@ def calc_kappa(x, beta1, E1, n2, E2):
 if 1:
     print("kappa: ", calc_kappa(x, beta1, E1, n2, E2))
 
+# Q: 7.b Which part of the integrand describes the overlap between the two modes?
+# A: The overlap between 2 waveguides is determined by calculating E1* times E2
+
 
 # =============================================================================
 # TASK 8 — Sweep the gap between the waveguides
 # =============================================================================
 # Put to 1 when you reach this task.
 # We change the gap by moving the center of waveguide 2.
-if 0:
+if 1:
     wg2_center_arr = np.linspace(300, 500, 10) * 1e-9
     kappa_arr = np.zeros(len(wg2_center_arr))
 
@@ -327,6 +353,10 @@ if 0:
     plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.show()
+
+# Q: 8d What relation do you observe between the gap and the coupling strength |κ|? Explain it using the mode profiles.
+# A: if the gab widens the kappa is getting smaller exponentially. The higher the gap between the 2 waveguides (delta n), 
+# the lower the overlapping part of E1 and E2.  
 
 
 # =============================================================================
@@ -359,13 +389,31 @@ kappa = calc_kappa(x, beta1, E1, n2, E2)
 z = np.linspace(0, 50e-6, 1000)
 a1, a2 = propagate(kappa, beta1, beta2, z)
 
+def check_p(amp1, amp2):
+    calculate_p = lambda a : np.abs(a) ** 2 
+    guides_total_powers = calculate_p(amp1) + calculate_p(amp2)
+    print("The modal power fractions conserved:", np.allclose(guides_total_powers, 1.0))
+
+check_p(a1, a2)
+
+
+def plt_a1_a2(amp1, amp2):
+    plt.plot(z * 1e3, np.abs(a1)**2, label="Guide 1")
+    plt.plot(z * 1e3, np.abs(a2)**2, label="Guide 2")
+    plt.xlabel("z (mm)")
+    plt.ylabel("Fraction of input power")
+    plt.legend()
+    plt.show()
+
+
 # Plot it! Uncomment this when a1 and a2 are ready.
-plt.plot(z * 1e3, np.abs(a1)**2, label="Guide 1")
-plt.plot(z * 1e3, np.abs(a2)**2, label="Guide 2")
-plt.xlabel("z (mm)")
-plt.ylabel("Fraction of input power")
-plt.legend()
-plt.show()
+if 1:
+    plt_a1_a2(a1, a2)
+
+# Q: 9d Describe how the power moves between the waveguides.
+# A: The guide 1 is the brightest when |a1|^2 == 1 and fades in when |a2|^2 grows. 
+# Q: 9d Does |a1(z)|2 + |a2(z)|2 remain constant?
+# A: Each of a1 and a2 oscylates between 0 and 1 but their sum is equal to 1. check_p prints true true 
 
 
 # =============================================================================
@@ -375,11 +423,62 @@ plt.show()
 # Combine the two mode profiles with their amplitudes at each z.
 # Hint: U should have shape (len(z), len(x)).
 
-# U = ...
+# print(E1.shape)
+
+U = a1[:, None]*E1 + a2[:, None]*E2 # (1000, 1) * (1201,)
+print("U shape == (len(z), len(x)): ", U.shape == (len(z), len(x)))
 
 # Uncomment this when U is ready.
-# plt.pcolormesh(x * 1e6, z * 1e3, np.abs(U)**2, shading="auto")
-# plt.xlabel("x (µm)")
-# plt.ylabel("z (mm)")
-# plt.colorbar(label="Field intensity (a.u.)")
-# plt.show()
+def plt_intencity_map(U):
+    plt.pcolormesh(x * 1e6, z * 1e3, np.abs(U)**2, shading="auto")
+    plt.xlabel("x (µm)")
+    plt.ylabel("z (mm)")
+    plt.colorbar(label="Field intensity (a.u.)")
+    plt.show()
+
+plt_intencity_map(U)
+
+# Q: 10c How does the intensity map correspond to the power curves from Task 9?
+# A: 
+# The intencity map shows the same exchange that between curves. 
+# The guide 1 is the brightest when |a1|^2 == 1 and fades in when |a2|^2 grows.  
+
+
+def create_waveguide(width, center=wg2_center):
+    n = make_n_step_profile(x, center, width)
+    beta, E = solveA(x, n)
+
+    return n, beta, E
+
+
+def simulate_coupling(width2, center2, z):
+    n, beta, E = create_waveguide(width2, center2)
+    kappa = calc_kappa(x, beta1, E1, n, E)
+    a1, a2 = propagate(kappa, beta1, beta, z)
+    U = a1[:, None] * E1 + a2[:, None] * E2
+    
+    return kappa, a1, a2, U
+
+
+# wg_width * 2 
+kappa, a1, a2, U = simulate_coupling(wg_width * 2, wg2_center, z)
+check_p(a1, a2)
+plt_a1_a2(a1, a2)
+plt_intencity_map(U)
+
+# wg_width / 2 
+kappa, a1, a2, U = simulate_coupling(wg_width / 2, wg2_center, z)
+check_p(a1, a2)
+plt_a1_a2(a1, a2)
+plt_intencity_map(U)
+
+
+kappa, a1, a2, U = simulate_coupling(wg_width , wg2_center, z)
+check_p(a1, a2)
+plt_a1_a2(a1, a2)
+plt_intencity_map(U)
+
+# Q: 10d what happens when you change the width of one of the waveguides? 
+# Plot the intensity map of that.
+# A: 
+# if wave guide width of 1 guide is different then the exchage of power between guides is smaller
