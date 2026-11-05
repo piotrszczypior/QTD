@@ -268,7 +268,6 @@ def simulateFleaCount(numFlea, t, x, jumpingProbability, Pl, Pr, Precombination)
                 fleaCount[it, ix + jump] += 1
 
         fleaCount[it, 0] = fleaCount[it, -1] = 0
-        # fleaCount[it, ix] -= fleaCount[it, ix] * Precombination
 
     return fleaCount
 
@@ -311,8 +310,6 @@ plt.legend()
 plt.show()
 
 
-exit()
-
 # %% Task 4 -- constant injection from the left: short and long sample
 def simulateInjection(numFlea, t, x, jumpingProbability, Pl, Pr, Precombination):
     """Like simulateFleaDensity, but with a constant injection from the left:
@@ -323,7 +320,22 @@ def simulateInjection(numFlea, t, x, jumpingProbability, Pl, Pr, Precombination)
     #       in every time step, fleaDensity[iT, 0] = numFlea and fleaDensity[iT, -1] = 0.
     #       Hint: with T = 10000 tau there are 1e5 time steps. A loop over the dogs takes some
     #       seconds; replacing it by NumPy slices (fleaDensity[iT-1, :-2], ...) is much faster.
-    raise NotImplementedError("Task 4: simulateInjection")
+    fleaDensity[0, len(x) // 2] = numFlea
+
+    recombination = 1 - Precombination
+    p_stay = 1 - jumpingProbability
+    p_right = Pr * jumpingProbability
+    p_left = Pl * jumpingProbability
+    
+    for it in range(1, len(t)):
+        stay = p_stay * fleaDensity[it - 1, 1:-1]
+        right = p_right * fleaDensity[it - 1, :-2]
+        left = p_left * fleaDensity[it - 1, 2:]
+
+        fleaDensity[it, 1:-1] = recombination * (stay + right + left)
+        fleaDensity[it, 0] = numFlea
+        fleaDensity[it, -1] = 0
+   
     return fleaDensity
 
 
