@@ -16,12 +16,23 @@ For plots, convert to eV (divide by const.e), cm^-3 (multiply by 1e-6) and um.
 """
 
 # %% Imports, material and given functions  (given -- do not change)
+from pathlib import Path
 import time
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import scipy.constants as const
 import scipy.optimize
 from scipy.integrate import trapezoid
+
+PLOTS_DIR = Path(__file__).resolve().parent.parent / "plots"
+PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def save_fig(fig, save_name):
+    fig.savefig(PLOTS_DIR / f"{save_name}.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
 
 class BaseMaterial:
@@ -115,16 +126,19 @@ def dos_to_per_ev_cm3(dos):
 
 fig, axs = plt.subplots(1, 2, figsize=(10, 4), sharey=False)
 
-axs[0].plot(dos_to_per_ev_cm3(dos_cb), to_ev(mySi.E))
-axs[0].plot(dos_to_per_ev_cm3(dos_vb), to_ev(mySi.E))
+axs[0].plot(dos_to_per_ev_cm3(dos_cb), to_ev(mySi.E), label="CB ($Z_C$)")
+axs[0].plot(dos_to_per_ev_cm3(dos_vb), to_ev(mySi.E), label="VB ($Z_V$)")
 axs[0].set_ylabel("E (eV)")
-axs[0].set_xlabel("Z(E)")
+axs[0].set_xlabel(r"$Z(E)$ ($\mathrm{eV}^{-1}\,\mathrm{cm}^{-3}$)")
+axs[0].legend()
 
-axs[1].plot(f, to_ev(mySi.E))
+axs[1].plot(f, to_ev(mySi.E), label=r"$E_F = -0.5$ eV")
 axs[1].set_ylabel("E (eV)")
-axs[1].set_xlabel("f(E)")
+axs[1].set_xlabel(r"$f(E)$")
+axs[1].legend()
 
-plt.show()
+fig.tight_layout()
+save_fig(fig, "lab_03_exercise_1a")
 
 
 def calcElectronDensity_FD(mat, E_Fermi):
@@ -179,8 +193,10 @@ plt.axvline(middle_band_gap, color='black', linestyle='--', label='midgap')
 plt.axvspan(mySi.Ev / const.e, mySi.Ec / const.e, color='gray', alpha=0.2, label='band gap')
 plt.yscale("log")
 plt.legend()
-plt.xlabel("E (eV)")
-plt.show()
+plt.xlabel(r"Fermi energy $E_F$ (eV)")
+plt.ylabel(r"Carrier density $n, p$ ($\mathrm{cm}^{-3}$)")
+fig.tight_layout()
+save_fig(fig, "lab_03_exercise_1b")
 
 # TODO answer (Where do n and p cross? What is this point called?):
 # N and P lines cross when both n and p numbers are the same.
@@ -248,9 +264,11 @@ plt.axhline(n_lim_fd, color='darkorange', linestyle=':', label='n at 10% deviati
 plt.axvline(middle_band_gap, color='black', linestyle='--', label='midgap')
 plt.axvspan(mySi.Ev / const.e, mySi.Ec / const.e, color='gray', alpha=0.2, label='band gap')
 plt.yscale("log")
-plt.xlabel("E (eV)")
+plt.xlabel(r"Fermi energy $E_F$ (eV)")
+plt.ylabel(r"Carrier density $n, p$ ($\mathrm{cm}^{-3}$)")
 plt.legend(loc="lower left")
-plt.show()
+fig.tight_layout()
+save_fig(fig, "lab_03_exercise_1c")
 
 
 # TODO answer (differences FD vs. MB, where and why, limit in kT and in cm^-3):
@@ -329,24 +347,28 @@ def ef_curves(vary):
 
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 8))
-for ax, vary, doping_label in [(axes[0], "D", "dN_D"), (axes[1], "A", "dN_A")]:
+for ax, vary, doping_label in [
+    (axes[0], "D", r"Donor density $N_D$ ($\mathrm{m}^{-3}$)"),
+    (axes[1], "A", r"Acceptor density $N_A$ ($\mathrm{m}^{-3}$)"),
+]:
     data = ef_curves(vary)
     dopping = data[0]
     approx_energies, exact_energies = map(np.asarray, zip(*data[1]))
 
     ax.plot(dopping, to_ev(approx_energies), label="Approx energies (eV)")
     ax.plot(dopping, to_ev(exact_energies), label="Exact energies (eV)")
-    ax.axhline(to_ev(mySi.Ec), color="red", linestyle="--", label="E_C")
-    ax.axhline(to_ev(mySi.Ev), color="blue", linestyle="--", label="E_V")
+    ax.axhline(to_ev(mySi.Ec), color="red", linestyle="--", label="$E_C$")
+    ax.axhline(to_ev(mySi.Ev), color="blue", linestyle="--", label="$E_V$")
     E_i = (mySi.Ec + mySi.Ev) / 2 + (const.k * mySi.T / 2) * np.log(mySi.Nv / mySi.Nc)
     ax.axhline(to_ev(E_i), color="green", linestyle=":", label="$E_i$")
 
     ax.set_xscale("log")
-    ax.set_ylabel("Energy (eV)")
+    ax.set_ylabel(r"Fermi energy $E_F$ (eV)")
     ax.set_xlabel(doping_label)
     ax.legend()
 
-plt.show()
+fig.tight_layout()
+save_fig(fig, "lab_03_exercise_2b")
 
 
 # TODO answer (approximation(s) behind calcEf_Approx, where and why it fails):
@@ -491,11 +513,13 @@ class Poisson:
         ax_densities.set_ylabel('n, p (cm$^{-3}$)')
         ax_densities.legend()
 
-        ax_charge.plot(x_um, (N_D - N_A - n + p) * 1e-6)
+        ax_charge.plot(x_um, (N_D - N_A - n + p) * 1e-6, label=r"$N_D - N_A - n + p$")
         ax_charge.set_ylabel(r'$N_D-N_A-n+p$ (cm$^{-3}$)')
+        ax_charge.legend()
 
-        ax_potentials.plot(x_um, self.V)
+        ax_potentials.plot(x_um, self.V, label=r"$V(x)$")
         ax_potentials.set_ylabel('el. potential (V)')
+        ax_potentials.legend()
 
         Ec = self.returnMaterialParameterAsArray('Ec')
         Ev = self.returnMaterialParameterAsArray('Ev')
@@ -526,7 +550,7 @@ t0 = time.time()
 pn.solve()
 print(f'solved in {time.time() - t0:.1f} s')
 fig = pn.plot()
-plt.show()
+save_fig(fig, "lab_03_exercise_4b")
 
 # TODO answer (potential drop vs. Task 3, width of the space-charge zone on both
 #              sides and why, total charge, what changes with another choice of E_F):

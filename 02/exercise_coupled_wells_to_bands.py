@@ -14,14 +14,19 @@ Units used throughout:  z in nm,  energies in eV,  wavefunctions in nm^-1/2.
 """
 
 # %% Imports, parameters and helper functions  (given -- do not change)
+from pathlib import Path
 import numpy as np
 import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import scipy.constants as const
 import scipy.sparse as sp
 from scipy.linalg import eigh, eigh_tridiagonal
 
 import argparse
+
+PLOTS_DIR = Path(__file__).resolve().parent.parent / "plots"
+PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # hbar^2 / (2 m_e) in eV nm^2  (~0.0381 eV nm^2)
 HBAR2_2M0 = const.hbar**2 / (2 * const.m_e) / const.e * 1e18
@@ -39,13 +44,9 @@ parser.add_argument("--plot", action="store_true")
 args, _ = parser.parse_known_args()
 
 
-if not args.plot:
-    matplotlib.use("Agg")
-
-
-def show():
-    if args.plot:
-        plt.show()
+def show(save_name):
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f"{save_name}.png", dpi=150, bbox_inches="tight")
     plt.close("all")
 
 
@@ -132,7 +133,7 @@ plt.xlabel("z (nm)")
 plt.ylabel("E (eV)")
 plt.title("Single quantum well")
 plt.legend()
-show()
+show("lab_02_exercise_1a")
 
 # TODO answer (Is the cladding thick enough? What goes wrong with 1 nm?):
 # Yes, cladding is thick enough. The wavefunction decays into the walls exponentially so that it becomes insignificant
@@ -162,7 +163,7 @@ E2, psi2 = solve_schroedinger(z2, V2, n_states=2)
 # needs: z2, V2, E2, psi2 of the double well, E0_single = E[0] of Task 1a
 scale = 0.05                               # scaling of psi for the plot
 plt.figure(figsize=(6, 4))
-plt.plot(z2, V2, "k", lw=1)
+plt.plot(z2, V2, "k", lw=1, label="$E_c(z)$")
 for i, label in enumerate(["state 1", "state 2"]):
     plt.plot(z2, E2[i] + scale * psi2[:, i], label=label)
 plt.axhline(E0_single, color="gray", ls=":", label="single well $E_0$")
@@ -170,7 +171,7 @@ plt.xlabel("z (nm)")
 plt.ylabel("E (eV)")
 plt.ylim(-V0 - 0.02, 0.02)
 plt.legend()
-show()
+show("lab_02_exercise_1b")
 
 # TODO answer (symmetry, bonding/antibonding, position relative to E_0):
 # The first ground state is symetric and bonding
@@ -204,7 +205,7 @@ plt.xlabel("barrier width b (nm)")
 plt.ylabel(r"$\Delta E$ (meV)")
 # plt.yscale('log', base=2)
 plt.legend()
-show()
+show("lab_02_exercise_1c")
 
 
 
@@ -262,14 +263,14 @@ E0 = E_left[0]
 # needs: z, V, phi_L, phi_R, E0
 scale = 0.05
 plt.figure(figsize=(6, 4))
-plt.plot(z, V, "k", lw=1)
+plt.plot(z, V, "k", lw=1, label="$E_c(z)$")
 plt.plot(z, E0 + scale * phi_L, label=r"$\varphi_L$")
 plt.plot(z, E0 + scale * phi_R, label=r"$\varphi_R$")
 plt.xlabel("z (nm)")
 plt.ylabel("E (eV)")
 plt.ylim(-V0 - 0.02, 0.02)
 plt.legend()
-show()
+show("lab_02_exercise_2a")
 
 
 # %% Task 2b -- matrix elements
@@ -342,7 +343,7 @@ scale = 0.04
 fig, axs = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
 for ax, E_l, psi_l, title in [(axs[0], E_S, psi_S, r"LCAO, $r \neq 0$"),
                               (axs[1], E_0r, psi_0r, "LCAO, $r = 0$")]:
-    ax.plot(z, V, "k", lw=1)
+    ax.plot(z, V, "k", lw=1, label="$E_c(z)$")
     for i in range(2):
         ax.plot(z, E2[i] + scale * psi2[:, i]**2, "-", color=f"C{i}",
                 label=f"exact, state {i+1}")
@@ -353,7 +354,8 @@ for ax, E_l, psi_l, title in [(axs[0], E_S, psi_S, r"LCAO, $r \neq 0$"),
     ax.set_ylim(E2[0] - 0.03, E2[1] + 0.03)
 axs[0].set_ylabel("E (eV)")
 axs[0].legend(fontsize=8)
-show()
+axs[1].legend(fontsize=8)
+show("lab_02_exercise_2d")
 
 
 def print_norm_and_expectation_value(psi, z=z, H=H):
@@ -419,7 +421,7 @@ plt.semilogy(barriers, 1e3 * np.array(dE_0r), "--", label="LCAO, $r = 0$")
 plt.xlabel("barrier width b (nm)")
 plt.ylabel(r"$\Delta E$ (meV)")
 plt.legend()
-show()
+show("lab_02_exercise_2e")
 
 # plt.figure(figsize=(6, 4))
 # plt.plot(barriers, np.array(dE_0r) / np.array(dE_S))
@@ -444,11 +446,20 @@ for N in range(1, 11):
     # plot (uncomment and adapt)
     # needs: E_N = energies of the N-well structure
     # note:  put plt.figure before the loop and the plt.plot line inside the loop
-    plt.plot(np.full(N, N), E_N, "_", ms=14, mew=1.5, color="C0")
+    plt.plot(
+        np.full(N, N),
+        E_N,
+        "_",
+        ms=14,
+        mew=1.5,
+        color="C0",
+        label="Eigenenergies $E_n$" if N == 1 else None,
+    )
 
 plt.xlabel("number of wells N")
 plt.ylabel("E (eV)")
-show()
+plt.legend()
+show("lab_02_exercise_3a")
 
 # TODO answer (number of states, band centre and width vs. N, N -> infinity):
 # As the number of wells N increases, the single energy level splits into N different states
@@ -468,11 +479,12 @@ _, psi6 = solve_schroedinger(z6, V6, n_states=N_WELLS)
 # needs: z6, V6, psi6 of the 6-well structure
 fig, axs = plt.subplots(6, 1, figsize=(6, 8), sharex=True)
 for i in range(6):
-    axs[i].plot(z6, psi6[:, i])
-    axs[i].plot(z6, V6, "k", lw=0.5)
-    axs[i].set_ylabel(f"n = {i+1}")
+    axs[i].plot(z6, psi6[:, i], label=r"$\psi_n(z)$")
+    axs[i].plot(z6, V6, "k", lw=0.5, label=r"$E_c(z)$ (eV)")
+    axs[i].set_ylabel(rf"$\psi_{{{i+1}}}$ ($\mathrm{{nm}}^{{-1/2}}$)")
+axs[0].legend(loc="upper right", fontsize=8)
 axs[-1].set_xlabel("z (nm)")
-show()
+show("lab_02_exercise_3b")
 
 # TODO answer (envelope, number of nodes, particle in a box):
 # The amplitude of wavefunction chages with the n value. 
@@ -503,7 +515,7 @@ plt.semilogy(barriers, 1e3 * np.array(dE_num), "-", label="double-well splitting
 plt.xlabel("barrier width b (nm)")
 plt.ylabel("energy (meV)")
 plt.legend()
-show()
+show("lab_02_exercise_3c")
 
 # TODO answer (bandwidth vs. b, comparison with the splitting, design):
 # As the barriers get wider, the bandwidth gets smaller because the wells are less connected.
@@ -528,7 +540,7 @@ plt.plot(k * a / np.pi, E_k, label="tight binding")
 plt.xlabel(r"$k a / \pi$")
 plt.ylabel("E (eV)")
 plt.legend()
-show()
+show("lab_02_exercise_4a")
 
 bandwidth = E_k.max() - E_k.min()
 print("Bamdwidth:", bandwidth)
@@ -555,12 +567,12 @@ k_n = np.pi * n / ((N_WELLS + 1) * a)
 # note:  Task 4c adds the parabola to this figure
 plt.figure(figsize=(6, 4))
 plt.plot(k * a / np.pi, E_k, label="tight binding")
-plt.plot(k_n * a / np.pi, E_20, "o", color="C2", label="Schroedinger, N = 20")
-plt.plot(-k_n * a / np.pi, E_20, "o", mfc="none", color="C2")
+plt.plot(k_n * a / np.pi, E_20, "o", color="C2", label="Schroedinger, N = 20 (+k)")
+plt.plot(-k_n * a / np.pi, E_20, "o", mfc="none", color="C2", label="Schroedinger, N = 20 (-k)")
 plt.xlabel(r"$k a / \pi$")
 plt.ylabel("E (eV)")
 plt.legend()
-show()
+show("lab_02_exercise_4b")
 
 # TODO answer (choice of k_n, N -> infinity):
 
@@ -593,16 +605,16 @@ E_c, m_star = fit_parabola(k_n[mask], E_20[mask])
 # needs: k, E_k, k_n, E_20 of Task 4b and E_c, m_star of the fit
 plt.figure(figsize=(6, 4))
 plt.plot(k * a / np.pi, E_k, label="tight binding")
-plt.plot(k_n * a / np.pi, E_20, "o", color="C2", label="Schroedinger, N = 20")
-plt.plot(-k_n * a / np.pi, E_20, "o", mfc="none", color="C2")
+plt.plot(k_n * a / np.pi, E_20, "o", color="C2", label="Schroedinger, N = 20 (+k)")
+plt.plot(-k_n * a / np.pi, E_20, "o", mfc="none", color="C2", label="Schroedinger, N = 20 (-k)")
 plt.plot(k * a / np.pi, E_c + HBAR2_2M0 / m_star * k**2, ":", color="C3",
          label=f"parabola, m* = {m_star:.3f} m_e")
-plt.axvspan(-0.5, 0.5, color="gray", alpha=0.1)   # fit range
+plt.axvspan(-0.5, 0.5, color="gray", alpha=0.1, label="fit range")   # fit range
 plt.ylim(E_20.min() - 0.01, E_20.max() + 0.01)
 plt.xlabel(r"$k a / \pi$")
 plt.ylabel("E (eV)")
 plt.legend()
-show()
+show("lab_02_exercise_4c")
 
 # TODO answer (why heavier than bulk, m* vs. barrier width, validity of the parabola, m* near k = pi/a):
 # The effective mass is larger than the bulk mass because the barriers make it harder for electrons to move.
@@ -637,9 +649,10 @@ E_200, _ = solve_schroedinger(z200, V200, n_states=N_WELLS)
 # needs: k, E_k (E(k) for 0 <= k <= pi/a), Z (DOS at the energies E_k),
 #        E_200 (energies of the 200-well structure), L (its length)
 fig, axs = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
-axs[0].plot(k * a / np.pi, E_k)
+axs[0].plot(k * a / np.pi, E_k, label="tight binding $E(k)$")
 axs[0].set_xlabel(r"$k a / \pi$")
 axs[0].set_ylabel("E (eV)")
+axs[0].legend()
 axs[1].plot(Z_E, E_k, label="from E(k)")
 hist, edges = np.histogram(E_200, bins=30)
 axs[1].barh(0.5 * (edges[1:] + edges[:-1]), hist / np.diff(edges) / L,
@@ -647,7 +660,7 @@ axs[1].barh(0.5 * (edges[1:] + edges[:-1]), hist / np.diff(edges) / L,
 axs[1].set_xlabel(r"Z(E) (eV$^{-1}$ nm$^{-1}$)")
 axs[1].set_xlim(0, 8 * Z_E.min())
 axs[1].legend()
-show()
+show("lab_02_exercise_bonus")
 
 # TODO answer (where does Z(E) diverge and why, comparison with free electron in 1D):
 # The density of states is highest at the edges

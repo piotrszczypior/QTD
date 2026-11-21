@@ -15,9 +15,20 @@ positions (states) the carriers can occupy. Units: SI (s, m, m/s).
 """
 
 # %% Imports and given helper  (given -- do not change)
+from pathlib import Path
 import time
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+PLOTS_DIR = Path(__file__).resolve().parent.parent / "plots"
+PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def save_fig(fig, save_name):
+    fig.savefig(PLOTS_DIR / f"{save_name}.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
 # use this generator for all random numbers, e.g.
 # randomGenerator.choice([0, 1], p=[0.9, 0.1])  ->  0 with probability 0.9, 1 with probability 0.1
@@ -78,18 +89,17 @@ for it in range(1, len(t)):
     numFleaLeft[it] = numFleaLeft[it - 1] + jump_left - jump_right
 
 
-if 0:
-    plt.figure()
+if 1:
+    fig = plt.figure()
     plt.plot(t, numFleaLeft, linestyle=':', color='r', label='left dog')
     plt.plot(t, numFleaRight, linestyle=':', color='b', label='right dog')
-    plt.plot(t, numFlea * (0.5 + 0.5 * np.exp(-2 * t / tau)), '--', color='lightcoral', label='analytical right')
-    plt.plot(t, numFlea * (0.5 - 0.5 * np.exp(-2 * t / tau)), '--', color='dodgerblue', label='analytical left')
+    plt.plot(t, numFlea * (0.5 + 0.5 * np.exp(-2 * t / tau)), '--', color='lightcoral', label='analytical left')
+    plt.plot(t, numFlea * (0.5 - 0.5 * np.exp(-2 * t / tau)), '--', color='dodgerblue', label='analytical right')
     plt.xlabel('time (s)')
     plt.ylabel('number of fleas on dog')
     plt.legend()
-    plt.show()
-
-    exit()
+    fig.tight_layout()
+    save_fig(fig, "lab_04_exercise_1a")
 
 # TODO answer (behaviour for different numFlea and tau):
 # When the number of fleas is low, the individual simulation deviates more from the analytical solution.
@@ -147,20 +157,19 @@ for it in range(1, len(t)):
     fleaDensityLeft[it] = fleaDensityLeft[it - 1] - jumping_right + jumping_left
 
 
-if 0:
-    plt.figure()
+if 1:
+    fig = plt.figure()
     # plt.plot(t, numFleaLeft, linestyle=':', color='r', label='left dog (individual)')
     # plt.plot(t, numFleaRight, linestyle=':', color='b', label='right dog (individual)')
     plt.plot(t, fleaDensityLeft, linestyle='-', color='r', label='left dog (average)')
     plt.plot(t, fleaDensityRight, linestyle='-', color='b', label='right dog (average)')
-    plt.plot(t, numFlea * (0.5 + 0.5 * np.exp(-2 * t / tau)), '--', color='lightcoral', label='analytical')
-    plt.plot(t, numFlea * (0.5 - 0.5 * np.exp(-2 * t / tau)), '--', color='dodgerblue')
+    plt.plot(t, numFlea * (0.5 + 0.5 * np.exp(-2 * t / tau)), '--', color='lightcoral', label='analytical left')
+    plt.plot(t, numFlea * (0.5 - 0.5 * np.exp(-2 * t / tau)), '--', color='dodgerblue', label='analytical right')
     plt.xlabel('time (s)')
     plt.ylabel('number of fleas on dog')
     plt.legend()
-    plt.show()
-
-    exit()
+    fig.tight_layout()
+    save_fig(fig, "lab_04_exercise_1b")
 
 # TODO answer (comparison of the two approaches for different numFlea and tau):
 # The number of fleas does not depend on the behavior of the model. 
@@ -222,14 +231,16 @@ Precombination = dt / tau_recombination
 fleaDensity_noRecombination = simulateFleaDensity(numFlea, t, x, jumpingProbability, Pl, Pr, 0.)
 fleaDensity_field = simulateFleaDensity(numFlea, t, x, jumpingProbability, Pl, Pr, Precombination)
 
-if 0:
+if 1:
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
     plotSnapshots(x, t, fleaDensity_noRecombination, ax=ax1)
     ax1.set_title('without recombination')
     ax1.legend()
     plotSnapshots(x, t, fleaDensity_field, ax=ax2)
     ax2.set_title(f'with recombination, tau_rec = {tau_recombination:.0e} s')
-    plt.show()
+    ax2.legend()
+    fig.tight_layout()
+    save_fig(fig, "lab_04_exercise_2a")
 
 
 # %% Task 2b -- drift: the Shockley-Haynes experiment
@@ -240,15 +251,16 @@ fleaDensity_field = simulateFleaDensity(numFlea, t, x, jumpingProbability, Pl=0.
 fleaDensity_field_recomb = simulateFleaDensity(numFlea, t, x, jumpingProbability, Pl=0.6, Pr=0.4, Precombination=Precombination)
 
 
-if 0:
+if 1:
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
     plotSnapshots(x, t, fleaDensity_field, ax=ax1)
     ax1.set_title('without recombination')
     ax1.legend()
     plotSnapshots(x, t, fleaDensity_field_recomb, ax=ax2)
     ax2.set_title(f'with recombination, tau_rec = {tau_recombination:.0e} s')
-    plt.show()
-    exit()
+    ax2.legend()
+    fig.tight_layout()
+    save_fig(fig, "lab_04_exercise_2b")
 
 
 # TODO answer (minimal number of fleas? tau_recombination in relation to which other

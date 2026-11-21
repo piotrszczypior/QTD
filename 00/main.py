@@ -1,5 +1,16 @@
+from pathlib import Path
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+
+PLOTS_DIR = Path(__file__).resolve().parent.parent / "plots"
+PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def save_fig(fig, save_name):
+    fig.savefig(PLOTS_DIR / f"{save_name}.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
 class Constants: 
     # in micro meters
@@ -39,26 +50,30 @@ def mean_width(values, amplitude):
 
 
 
-def plot(x_data, psi_data, k_lines, A_lines, x_lim=(-3, 3)):
+def plot(x_data, psi_data, k_lines, A_lines, x_lim=(-3, 3), save_name="lab_00_plot", title=None):
     fig, (ax_x, ax_k) = plt.subplots(1, 2, figsize=(11, 4))
 
     # left panel: real space
-    ax_x.plot(x_data, psi_data.real)
+    ax_x.plot(x_data, psi_data.real, label=r"$\mathrm{Re}\,\psi(x)$")
     ax_x.set_xlabel(r"$x$ ($\mu$m)")
     ax_x.set_xlim(x_lim)
     ax_x.set_ylabel(r"$\mathrm{Re}\,\psi(x)$")
+    ax_x.legend(loc="upper right")
 
     # ax_x.plot(x_values, y_values, "o-") # points and line
     # ax_x.plot(k_lines, y_values, "o") # points only
     # ax_x.plot(x_values, y_values, marker="x", markersize=4, linestyle="--")
 
     # right panel: k-space
-    ax_k.stem(k_lines, A_lines.real)
+    ax_k.stem(k_lines, np.abs(A_lines), label=r"$|A_j|$")
     ax_k.set_xlabel(r"$k$ ($\mu$m$^{-1}$)")
     ax_k.set_ylabel(r"$|A_j|$")
+    ax_k.legend(loc="upper right")
+    if title:
+        fig.suptitle(title)
     fig.tight_layout()
 
-    plt.show()
+    save_fig(fig, save_name)
 
 
 def exercise_1_1(): 
@@ -76,7 +91,7 @@ def exercise_1_1():
     print(wave_group.shape)
     print()
 
-    plot(Constants.x, wave_group, k_lines, A_lines)
+    plot(Constants.x, wave_group, k_lines, A_lines, save_name="lab_00_exercise_1_1")
 
 
 def exercise_1_2():
@@ -90,7 +105,7 @@ def exercise_1_2():
 
     wave_group = sum_of_waves(k_lines, A_lines, omega_lines, t)
 
-    plot(Constants.x, wave_group, k_lines, A_lines, x_lim=(-30, 30))
+    plot(Constants.x, wave_group, k_lines, A_lines, x_lim=(-30, 30), save_name="lab_00_exercise_1_2")
 
     print("Wave length: ", 2 * np.pi / Constants.k0)
     print("Envelop period: ", 2 * np.pi / Constants.delta_k)
@@ -101,7 +116,7 @@ def exercise_1_3():
     As N increases more frequency components interfere, making the central peak narrower and more localized
     """
     t = 0.0
-    for exponent in range(5):
+    for idx, exponent in enumerate(range(5), start=1):
         n = 2 ** exponent
         k_lines = Constants.k0 + (np.arange(n) - (n - 1) / 2) * Constants.delta_k
         A_lines = np.ones(n, dtype=complex)
@@ -109,21 +124,37 @@ def exercise_1_3():
 
         wave_group = sum_of_waves(k_lines, A_lines, omega_lines, t)
 
-        plot(Constants.x, wave_group, k_lines, A_lines, x_lim=(-300, 300))
+        plot(
+            Constants.x,
+            wave_group,
+            k_lines,
+            A_lines,
+            x_lim=(-300, 300),
+            save_name=f"lab_00_exercise_1_3_{idx}",
+            title=f"N = {n}",
+        )
 
 
 def exercise_1_4():
     # 1.4 Gaussian amplitudes
     t = 0.0
     sigma_k = 0.1
-    for delta_k in [0.01, 0.05, 0.02]:
+    for idx, delta_k in enumerate([0.01, 0.05, 0.02], start=1):
         k_lines = np.arange(Constants.k0 - 5 * sigma_k, Constants.k0 + 5 * sigma_k, delta_k)
         A_lines = np.exp(-(k_lines - Constants.k0) ** 2 / (4 * sigma_k ** 2)).astype(complex)
         omega_lines = Constants.c * k_lines
 
         wave_group = sum_of_waves(k_lines, A_lines, omega_lines, t)
 
-        plot(Constants.x, wave_group, k_lines, A_lines, x_lim=(-300, 300))
+        plot(
+            Constants.x,
+            wave_group,
+            k_lines,
+            A_lines,
+            x_lim=(-300, 300),
+            save_name=f"lab_00_exercise_1_4_{idx}",
+            title=rf"$\Delta k = {delta_k}\,\mu\mathrm{{m}}^{{-1}}$",
+        )
 
 
 def exercise_1_5():
@@ -136,7 +167,7 @@ def exercise_1_5():
     delta_k = 0.01 
     sigma_k_list = [0.25, 0.1, 0.05]
 
-    for sigma_k in sigma_k_list: 
+    for idx, sigma_k in enumerate(sigma_k_list, start=1): 
         k_lines = np.arange(Constants.k0 - 5 * sigma_k, Constants.k0 + 5 * sigma_k, delta_k)
         A_lines = np.exp(-(k_lines - Constants.k0) ** 2 / (4 * sigma_k ** 2)).astype(complex)
         omega_lines = Constants.c * k_lines
@@ -156,7 +187,15 @@ def exercise_1_5():
 
         print("sigma_x * sigma_k: {:.3f}".format(std_k * std_x))
 
-        plot(Constants.x, wave_group, k_lines, A_lines, x_lim=(-300, 300))
+        plot(
+            Constants.x,
+            wave_group,
+            k_lines,
+            A_lines,
+            x_lim=(-300, 300),
+            save_name=f"lab_00_exercise_1_5_{idx}",
+            title=rf"$\sigma_k = {sigma_k}\,\mu\mathrm{{m}}^{{-1}}$",
+        )
 
         # print(mean_width(k_lines, A_lines))
         # print(mean_width(Constants.x, wave_group))
@@ -198,15 +237,16 @@ def exercise_1_6():
     print("Packet speed: ", v_group)
 
     fig, ax = plt.subplots(1, 1, figsize=(5, 4))
-    ax.plot(k_lines, omega_lines, label="omega(k)")
-    ax.set_ylabel(r"$\omega(k)$")
+    ax.plot(k_lines, omega_lines, label=r"$\omega(k)$")
+    ax.set_xlabel(r"$k$ ($\mu$m$^{-1}$)")
+    ax.set_ylabel(r"$\omega(k)$ (rad/s)")
     ax.grid(visible = True)
     ax.legend()
     fig.tight_layout()
-    plt.show()
+    save_fig(fig, "lab_00_exercise_1_6_1")
 
-    plot(Constants.x, wave_groups[0], k_lines, A_lines, x_lim=(-300, 300))
-    plot(Constants.x, wave_groups[1], k_lines, A_lines, x_lim=(-300, 300))
+    plot(Constants.x, wave_groups[0], k_lines, A_lines, x_lim=(-300, 300), save_name="lab_00_exercise_1_6_2", title="t = 0 fs")
+    plot(Constants.x, wave_groups[1], k_lines, A_lines, x_lim=(-300, 300), save_name="lab_00_exercise_1_6_3", title="t = 150 fs")
 
 
 
@@ -240,17 +280,17 @@ def exercise_2_1():
     fig, axes = plt.subplots(2, 2, figsize=(11, 8))
     for ax, b in zip(axes.ravel(), beta_list):
         
-        ax.plot(k, omega(k, b), "*", label="omega(k)")
-        ax.plot(k, v_ph* k, "-", label=f"v_ph = {v_ph:.2f}")
-        ax.plot(k, w0 + vg * (k - k0), ":", label=f"v_g = {vg:.2f}")
+        ax.plot(k, omega(k, b), "*", label=r"$\omega(k)$")
+        ax.plot(k, v_ph * k, "-", label=rf"$v_{{\mathrm{{ph}}}} = {v_ph:.2f}\,\mu\mathrm{{m/fs}}$")
+        ax.plot(k, w0 + vg * (k - k0), ":", label=rf"$v_g = {vg:.2f}\,\mu\mathrm{{m/fs}}$")
 
         ax.set_xlabel(r"$k$ ($\mu$m$^{-1}$)")
-        ax.set_ylabel(r"$\omega(k)$")
+        ax.set_ylabel(r"$\omega(k)$ (rad/fs)")
         ax.grid(visible = True)
         ax.legend()
         ax.set_title(rf"$\beta = {b}$")
     fig.tight_layout()
-    plt.show()
+    save_fig(fig, "lab_00_exercise_2_1")
 
     
 
@@ -272,7 +312,7 @@ def exercise_2_2():
     print("Prediction: vph = {:.4f} um/fs, vg = {:.4f} um/fs, n_g = {:.3f}".format(vph_pred, vg, ng_pred))
 
     wave = sum_of_waves(k_lines, A_lines, omega_lines, 0)
-    plot(Constants.x, wave, k_lines, A_lines)
+    plot(Constants.x, wave, k_lines, A_lines, save_name="lab_00_exercise_2_2_1")
 
     def interpolate_complex(x, y, x_point):
         return np.interp(x_point, x, y.real) + 1j * np.interp(x_point, x, y.imag)
@@ -303,18 +343,18 @@ def exercise_2_2():
     fig, axes = plt.subplots(len(snapshot_times), 1, figsize=(10, 6), sharex=True)
     for ax, t in zip(axes, snapshot_times):
         wave = sum_of_waves(k_lines, A_lines, omega_lines, t)
-        ax.plot(Constants.x, wave.real, label="Re-part")
+        ax.plot(Constants.x, wave.real, label=r"$\mathrm{Re}\,\psi(x)$")
         ax.plot(Constants.x, np.abs(wave), "k--", label="Envelope")
         ax.plot(Constants.x, -np.abs(wave), "k--")
         ax.axvline(vg * t, color="red", alpha=0.7, label="Envelope Centre")
-        ax.set_ylabel(f"t = {t} fs")
+        ax.set_ylabel(rf"$\psi(x)$ ($t = {t}$ fs)")
         ax.set_xlim(-10, 30)
         ax.grid(alpha=0.3)
 
     axes[0].legend(loc="upper right")
-    axes[-1].set_xlabel("x")
+    axes[-1].set_xlabel(r"$x$ ($\mu$m)")
     fig.tight_layout()
-    plt.show()
+    save_fig(fig, "lab_00_exercise_2_2_2")
 
 
 def exercise_2_3():
@@ -335,7 +375,7 @@ def exercise_2_3():
     def interpolate_complex(x, y, x_point):
         return np.interp(x_point, x, y.real) + 1j * np.interp(x_point, x, y.imag)
 
-    for beta in betas: 
+    for idx, beta in enumerate(betas, start=1): 
         k_lines = np.arange(k0 - 5 * sigma_k, k0 + 5 * sigma_k, delta_k)
         A_lines = np.exp(-(k_lines - k0) ** 2 / (4 * sigma_k ** 2)).astype(complex)
         omega_lines = w0 + vg * (k_lines - k0) + 0.5 * beta * (k_lines - k0) ** 2
@@ -344,15 +384,15 @@ def exercise_2_3():
         phase_centres = []
 
         fig, axes = plt.subplots(len(times), 1, figsize=(10, 8), sharex=True, sharey=True)
-        fig.suptitle(f"Beta = {beta}")
+        fig.suptitle(rf"$\beta = {beta}$")
 
         for ax, t in zip(axes, times):
             wave = sum_of_waves(k_lines, A_lines, omega_lines, t)
             
-            ax.plot(Constants.x, wave.real, label="Re(WF))")
+            ax.plot(Constants.x, wave.real, label=r"$\mathrm{Re}\,\psi(x)$")
             ax.plot(Constants.x, np.abs(wave), "k--", label="Envelope")
             ax.plot(Constants.x, -np.abs(wave), "k--")
-            ax.set_ylabel(f"t = {t} fs")
+            ax.set_ylabel(rf"$\psi(x)$ ($t = {t}$ fs)")
             ax.set_xlim(-20, 160)
             ax.grid(alpha=0.3)
 
@@ -361,9 +401,9 @@ def exercise_2_3():
             phase_centres.append(interpolate_complex(Constants.x, wave, centre))
 
         axes[0].legend(loc="upper right")
-        axes[-1].set_xlabel("x ")
+        axes[-1].set_xlabel(r"$x$ ($\mu$m)")
         fig.tight_layout()
-        plt.show()
+        save_fig(fig, f"lab_00_exercise_2_3_{idx}")
 
         vg_measured, _ = np.polyfit(times, group_centres, 1)
         centre_phase = np.unwrap(np.angle(phase_centres))
@@ -398,10 +438,10 @@ def exercise_2_4():
         omega_lines = w0 + vg * (k_lines - k0) + 0.5 * beta * (k_lines - k0) ** 2
         wave_x = sum_of_waves(k_lines, A_lines, omega_lines, t_max)
 
-        axes[0].plot(Constants.x, np.abs(wave_x),label=f"beta={beta}")
+        axes[0].plot(Constants.x, np.abs(wave_x), label=rf"$\beta = {beta}$")
 
         dispersion_phase = -0.5 * beta * (k_lines - k0) ** 2 * t_max
-        axes[1].plot(k_lines, dispersion_phase, label=f"beta={beta}")
+        axes[1].plot(k_lines, dispersion_phase, label=rf"$\beta = {beta}$")
 
     axes[0].set_xlim(-20, 160)
     axes[0].set_xlabel(r"$x$ ($\mu$m)")
@@ -410,12 +450,12 @@ def exercise_2_4():
     axes[0].grid(alpha=0.3)
 
     axes[1].set_xlabel(r"$k$ ($\mu$m$^{-1}$)")
-    axes[1].set_ylabel("Dispersion")
+    axes[1].set_ylabel(r"Dispersion phase $\Delta\phi(k)$ (rad)")
     axes[1].legend()
     axes[1].grid(alpha=0.3)
 
     fig.tight_layout()
-    plt.show()
+    save_fig(fig, "lab_00_exercise_2_4")
 
 
 def exercise_2_5():
@@ -447,17 +487,17 @@ def exercise_2_5():
 
     for ax, t in zip(axes, times):
         w_t = sum_of_waves(k_lines, A_lines, omega_lines, t)
-        ax.plot(Constants.x, w_t.real, label="Re(psi)")
+        ax.plot(Constants.x, w_t.real, label=r"$\mathrm{Re}\,\psi(x)$")
         ax.plot(Constants.x, np.abs(w_t), "k--", label="Envelope")
         ax.plot(Constants.x, -np.abs(w_t), "k--")
-        ax.set_ylabel(f"t = {t} fs")
+        ax.set_ylabel(rf"$\psi(x)$ ($t = {t}$ fs)")
         ax.set_xlim(-20, 150)
         ax.grid(alpha=0.3)
 
     axes[0].legend(loc="upper right")
-    axes[-1].set_xlabel("x (um)")
+    axes[-1].set_xlabel(r"$x$ ($\mu$m)")
     fig.tight_layout()
-    plt.show()
+    save_fig(fig, "lab_00_exercise_2_5")
 
 
 def exercise_2_6():
@@ -535,19 +575,19 @@ def exercise_3_1():
     fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
     axes[0].plot(k_lines, omega, label=r"$\omega(k)$")
-    axes[0].set_ylabel(r"$\omega$")
+    axes[0].set_ylabel(r"$\omega(k)$ (rad/fs)")
     axes[0].grid(alpha=0.3)
     axes[0].legend()
     
     axes[1].plot(k_lines, vg, color="orange", label=r"$v_g(k)$")
-    axes[1].plot(2 * np.pi / a, 0.2, "*")
+    axes[1].plot(2 * np.pi / a, 0.2, "*", label=r"$k = 2\pi/a$")
     axes[1].set_xlabel(r"$k$ ($\mu$m$^{-1}$)")
-    axes[1].set_ylabel(r"$v_g$")
+    axes[1].set_ylabel(r"$v_g(k)$ ($\mu$m/fs)")
     axes[1].grid(alpha=0.3)
     axes[1].legend()
 
     fig.tight_layout()
-    plt.show()
+    save_fig(fig, "lab_00_exercise_3_1")
 
 
 def exercise_3_2():
@@ -593,16 +633,16 @@ def exercise_3_2():
 
 if __name__ == '__main__':
     exercise_1_1()
-    # exercise_1_2()
-    # exercise_1_3()
-    # exercise_1_4()
-    # exercise_1_5()
-    # exercise_1_6()
-    # exercise_2_1()
-    # exercise_2_2()
-    # exercise_2_3()
-    # exercise_2_4()
-    # exercise_2_5()
-    # exercise_2_6()
-    # exercise_3_1()
-    # exercise_3_2()
+    exercise_1_2()
+    exercise_1_3()
+    exercise_1_4()
+    exercise_1_5()
+    exercise_1_6()
+    exercise_2_1()
+    exercise_2_2()
+    exercise_2_3()
+    exercise_2_4()
+    exercise_2_5()
+    exercise_2_6()
+    exercise_3_1()
+    exercise_3_2()

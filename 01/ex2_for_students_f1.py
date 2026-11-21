@@ -1,9 +1,20 @@
+from pathlib import Path
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.sparse import diags
 from scipy.sparse.linalg import eigsh
 from scipy.integrate import solve_ivp
 from scipy.constants import h
+
+PLOTS_DIR = Path(__file__).resolve().parent.parent / "plots"
+PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def save_fig(fig, save_name):
+    fig.savefig(PLOTS_DIR / f"{save_name}.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
 
 # =============================================================================
@@ -24,17 +35,21 @@ wg_center = -200e-9   # waveguide center (m)
 x = np.linspace(-3e-6, 3e-6, 1201)
 
 
-def plot_mode(x, n, e_vector):
+def plot_mode(x, n, e_vector, save_name="lab_01_mode", title=None):
     fig, axes = plt.subplots(2, 1, sharex=True, figsize=(7, 5))
-    axes[0].plot(x * 1e6, n, color="black")
-    axes[0].set_ylabel("n(x)")
-    axes[1].plot(x * 1e6, np.abs(e_vector)**2, color="orange")
-    axes[1].set_xlabel("x (μm)")
-    axes[1].set_ylabel("|E(x)|^2 (a.u.)")
+    axes[0].plot(x * 1e6, n, color="black", label=r"$n(x)$")
+    axes[0].set_ylabel(r"Refractive index $n(x)$")
+    axes[0].legend(loc="upper right")
+    axes[1].plot(x * 1e6, np.abs(e_vector)**2, color="orange", label=r"$|E(x)|^2$")
+    axes[1].set_xlabel(r"$x$ ($\mu$m)")
+    axes[1].set_ylabel(r"$|E(x)|^2$ (a.u.)")
+    axes[1].legend(loc="upper right")
     for ax in axes:
         ax.grid(alpha=0.25)
+    if title:
+        fig.suptitle(title)
     fig.tight_layout()
-    plt.show()
+    save_fig(fig, save_name)
 
 
 def make_n_step_profile(x, center, width, n_air=n_air, n_core=n_core):
@@ -81,7 +96,7 @@ def solveA(x, n, k=1, select_mode=0):
     # print(type(A))
 
     # Set to 1 to print a part of your matrix and see if it makes sense.
-    if 0:
+    if 1:
         with np.printoptions(precision=4, suppress=True, linewidth=140):
             print((A * dx**2).toarray()[:6, :6])
 
@@ -137,7 +152,7 @@ def solveA(x, n, k=1, select_mode=0):
     # - Does the following integral give 1? int(np.abs(e_vector_norm)**2)*dx) over all of x
     # If yes, then your mode is normalized! Great job.
 
-    if 0: 
+    if 1: 
         print("Is the length of e_vector_norm equal to len(x): ", len(x) == len(e_vector_norm)) # yes
         integral = np.sum(np.abs(e_vector_norm)**2) * dx
         print("Does the following integral give 1?", int(integral) == 1) # yes
@@ -160,34 +175,34 @@ neff1 = beta1 / k0
 print("Effective index E1 = ", neff1)
 
 if 1: 
-    beta1, E1 = solveA(x, n1, k=5, select_mode=0)
-    neff1 = beta1 / k0
-    print(f"Mode {0} N eff1 = ", neff1)
-    plot_mode(x, n1, E1)
+    beta_m, E_m = solveA(x, n1, k=5, select_mode=0)
+    neff_m = beta_m / k0
+    print(f"Mode {0} N eff1 = ", neff_m)
+    plot_mode(x, n1, E_m, save_name="lab_01_exercise_3_1", title="Waveguide 1 — Mode TE0")
 
-    beta1, E1 = solveA(x, n1, k=5, select_mode=1)
-    neff1 = beta1 / k0
-    print("Mode 1 N eff1 = ", neff1)
-    plot_mode(x, n1, E1)
+    beta_m, E_m = solveA(x, n1, k=5, select_mode=1)
+    neff_m = beta_m / k0
+    print("Mode 1 N eff1 = ", neff_m)
+    plot_mode(x, n1, E_m, save_name="lab_01_exercise_3_2", title="Waveguide 1 — Mode TE1")
 
-    beta1, E1 = solveA(x, n1, k=5, select_mode=2)
-    neff1 = beta1 / k0
-    print("Mode 2 N eff1 = ", neff1)
-    plot_mode(x, n1, E1)
+    beta_m, E_m = solveA(x, n1, k=5, select_mode=2)
+    neff_m = beta_m / k0
+    print("Mode 2 N eff1 = ", neff_m)
+    plot_mode(x, n1, E_m, save_name="lab_01_exercise_3_3", title="Waveguide 1 — Mode 2")
 
-    beta1, E1 = solveA(x, n1, k=5, select_mode=3)
-    neff1 = beta1 / k0
-    print("Mode 3 N eff1 = ", neff1)
-    plot_mode(x, n1, E1)
+    beta_m, E_m = solveA(x, n1, k=5, select_mode=3)
+    neff_m = beta_m / k0
+    print("Mode 3 N eff1 = ", neff_m)
+    plot_mode(x, n1, E_m, save_name="lab_01_exercise_3_4", title="Waveguide 1 — Mode 3")
 
-    beta1, E1 = solveA(x, n1, k=5, select_mode=4)
-    neff1 = beta1 / k0
-    print("Mode 4 N eff1 = ", neff1)
-    plot_mode(x, n1, E1)
+    beta_m, E_m = solveA(x, n1, k=5, select_mode=4)
+    neff_m = beta_m / k0
+    print("Mode 4 N eff1 = ", neff_m)
+    plot_mode(x, n1, E_m, save_name="lab_01_exercise_3_5", title="Waveguide 1 — Mode 4")
 
 
-if 0:
-    plot_mode(x, n1, E1)
+if 1:
+    plot_mode(x, n1, E1, save_name="lab_01_exercise_3_6", title="Waveguide 1 — Fundamental Mode TE0")
 
 # Q: 3.d How many guided TE modes are supported? 
 # A: Supported are: 0 and 1.
@@ -216,13 +231,15 @@ if 1:
         neff_arr[i] = beta_i / k0
 
     # And make a plot please. Uncomment this when your sweep is ready.
-    plt.plot(widths * 1e9, neff_arr, "o-", color="tab:blue")
-    plt.xlabel("Waveguide width (nm)")
-    plt.ylabel(r"Effective index $n_{\mathrm{eff}}$")
-    plt.title("Effective index vs waveguide width")
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.show()
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.plot(widths * 1e9, neff_arr, "o-", color="tab:blue", label=r"$n_{\mathrm{eff}}$ (TE$_0$)")
+    ax.set_xlabel("Waveguide width (nm)")
+    ax.set_ylabel(r"Effective index $n_{\mathrm{eff}}$")
+    ax.set_title("Effective index vs waveguide width")
+    ax.grid(alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    save_fig(fig, "lab_01_exercise_4")
 
 # Q 4.c  What relation do you observe between the waveguide width and the effective index? 
 # A: Exponential increases of effective index in respect of wave width toward 3.5.
@@ -268,13 +285,15 @@ if 1:
         fraction_outside_arr[i] = left_integral + right_integral
 
     # And make a plot please. Uncomment this when your sweep is ready.
-    plt.plot(widths * 1e9, fraction_outside_arr, "o-", color="tab:blue")
-    plt.xlabel("Waveguide width (nm)")
-    plt.ylabel(r"Effective index $n_{\mathrm{eff}}$")
-    plt.title("Effective index vs waveguide width")
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.show()
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.plot(widths * 1e9, fraction_outside_arr, "o-", color="tab:blue", label="Outside power fraction")
+    ax.set_xlabel("Waveguide width (nm)")
+    ax.set_ylabel(r"Fraction of $|E|^2$ outside core")
+    ax.set_title("Fraction of mode power outside waveguide vs width")
+    ax.grid(alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    save_fig(fig, "lab_01_exercise_5")
 
 # Q: 5.d  How does this fraction change with width? How is this related to the effective-index trend in Task 4?
 # A: Franction of field in evanescent space decreases with width of waveguide. It is the opposite of effective index. The wider the wave guide the less field is outside it. 
@@ -293,14 +312,13 @@ wg2_center = 300e-9
 n2 = make_n_step_profile(x, wg2_center, wg_width)
 beta2, E2 = solveA(x, n2)
 if 1:
-    plot_mode(x, n2, E2)
+    plot_mode(x, n2, E2, save_name="lab_01_exercise_6", title="Waveguide 2 — Mode TE0")
 
 print("Effective index E2: ", beta2 / k0)
 
 # Q: 6c Compare the mode profile and effective index with those of the first waveguide. What changes, and why?
 # A; Effective index and the mode profiles between two wave guides remains the same, 
 # only the second wave guide is shifted because both waveguides have the same width.
-exit()
 
 # =============================================================================
 # TASK 7 — Implement the coupling coefficient kappa
@@ -340,19 +358,27 @@ if 1:
         beta2_i, E2_i = solveA(x, n2_i, k=1, select_mode=0)
 
         # I recommend plotting this so you are sure the gap is changing.
-        plot_mode(x, n2_i, E2_i)
+        plot_mode(
+            x,
+            n2_i,
+            E2_i,
+            save_name=f"lab_01_exercise_8_{i + 1}",
+            title=f"Waveguide 2 center = {center * 1e9:.0f} nm",
+        )
 
         # Use the function calc_kappa and store the result at position i.
         kappa_arr[i] = calc_kappa(x, beta1, E1, n2_i, E2_i)
 
     # Plot it! Uncomment this when your sweep is ready.
-    plt.plot(wg2_center_arr * 1e9, np.abs(kappa_arr), "o-", color="tab:blue")
-    plt.xlabel("Waveguide 2 center (nm)")
-    plt.ylabel(r"Coupling strength $|\kappa|$ (m$^{-1}$)")
-    plt.title("Coupling strength vs waveguide position")
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.show()
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.plot(wg2_center_arr * 1e9, np.abs(kappa_arr), "o-", color="tab:blue", label=r"$|\kappa|$")
+    ax.set_xlabel("Waveguide 2 center (nm)")
+    ax.set_ylabel(r"Coupling strength $|\kappa|$ (m$^{-1}$)")
+    ax.set_title("Coupling strength vs waveguide position")
+    ax.grid(alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    save_fig(fig, "lab_01_exercise_8_11")
 
 # Q: 8d What relation do you observe between the gap and the coupling strength |κ|? Explain it using the mode profiles.
 # A: if the gab widens the kappa is getting smaller exponentially. The higher the gap between the 2 waveguides (delta n), 
@@ -397,18 +423,23 @@ def check_p(amp1, amp2):
 check_p(a1, a2)
 
 
-def plt_a1_a2(amp1, amp2):
-    plt.plot(z * 1e3, np.abs(a1)**2, label="Guide 1")
-    plt.plot(z * 1e3, np.abs(a2)**2, label="Guide 2")
-    plt.xlabel("z (mm)")
-    plt.ylabel("Fraction of input power")
-    plt.legend()
-    plt.show()
+def plt_a1_a2(amp1, amp2, save_name="lab_01_exercise_9", title=None):
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.plot(z * 1e3, np.abs(amp1)**2, label="Guide 1")
+    ax.plot(z * 1e3, np.abs(amp2)**2, label="Guide 2")
+    ax.set_xlabel("z (mm)")
+    ax.set_ylabel("Fraction of input power")
+    if title:
+        ax.set_title(title)
+    ax.grid(alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    save_fig(fig, save_name)
 
 
 # Plot it! Uncomment this when a1 and a2 are ready.
 if 1:
-    plt_a1_a2(a1, a2)
+    plt_a1_a2(a1, a2, save_name="lab_01_exercise_9", title="Coupled waveguide power exchange")
 
 # Q: 9d Describe how the power moves between the waveguides.
 # A: The guide 1 is the brightest when |a1|^2 == 1 and fades in when |a2|^2 grows. 
@@ -429,14 +460,18 @@ U = a1[:, None]*E1 + a2[:, None]*E2 # (1000, 1) * (1201,)
 print("U shape == (len(z), len(x)): ", U.shape == (len(z), len(x)))
 
 # Uncomment this when U is ready.
-def plt_intencity_map(U):
-    plt.pcolormesh(x * 1e6, z * 1e3, np.abs(U)**2, shading="auto")
-    plt.xlabel("x (µm)")
-    plt.ylabel("z (mm)")
-    plt.colorbar(label="Field intensity (a.u.)")
-    plt.show()
+def plt_intencity_map(U, save_name="lab_01_exercise_10_1", title=None):
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    mesh = ax.pcolormesh(x * 1e6, z * 1e3, np.abs(U)**2, shading="auto")
+    ax.set_xlabel(r"$x$ ($\mu$m)")
+    ax.set_ylabel("z (mm)")
+    if title:
+        ax.set_title(title)
+    fig.colorbar(mesh, ax=ax, label="Field intensity (a.u.)")
+    fig.tight_layout()
+    save_fig(fig, save_name)
 
-plt_intencity_map(U)
+plt_intencity_map(U, save_name="lab_01_exercise_10_1", title=f"Field intensity ($w_2 = {wg_width * 1e9:.0f}$ nm)")
 
 # Q: 10c How does the intensity map correspond to the power curves from Task 9?
 # A: 
@@ -463,20 +498,20 @@ def simulate_coupling(width2, center2, z):
 # wg_width * 2 
 kappa, a1, a2, U = simulate_coupling(wg_width * 2, wg2_center, z)
 check_p(a1, a2)
-plt_a1_a2(a1, a2)
-plt_intencity_map(U)
+plt_a1_a2(a1, a2, save_name="lab_01_exercise_10_2", title=f"Power exchange ($w_2 = {2 * wg_width * 1e9:.0f}$ nm)")
+plt_intencity_map(U, save_name="lab_01_exercise_10_3", title=f"Field intensity ($w_2 = {2 * wg_width * 1e9:.0f}$ nm)")
 
 # wg_width / 2 
 kappa, a1, a2, U = simulate_coupling(wg_width / 2, wg2_center, z)
 check_p(a1, a2)
-plt_a1_a2(a1, a2)
-plt_intencity_map(U)
+plt_a1_a2(a1, a2, save_name="lab_01_exercise_10_4", title=f"Power exchange ($w_2 = {0.5 * wg_width * 1e9:.0f}$ nm)")
+plt_intencity_map(U, save_name="lab_01_exercise_10_5", title=f"Field intensity ($w_2 = {0.5 * wg_width * 1e9:.0f}$ nm)")
 
 
 kappa, a1, a2, U = simulate_coupling(wg_width , wg2_center, z)
 check_p(a1, a2)
-plt_a1_a2(a1, a2)
-plt_intencity_map(U)
+plt_a1_a2(a1, a2, save_name="lab_01_exercise_10_6", title=f"Power exchange ($w_2 = {wg_width * 1e9:.0f}$ nm)")
+plt_intencity_map(U, save_name="lab_01_exercise_10_7", title=f"Field intensity ($w_2 = {wg_width * 1e9:.0f}$ nm)")
 
 # Q: 10d what happens when you change the width of one of the waveguides? 
 # Plot the intensity map of that.
