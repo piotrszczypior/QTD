@@ -328,25 +328,33 @@ Pl = Pr = 0.5
 tau_recombination = 1e-11
 Precombination = dt / tau_recombination
 
-if 0:
+if 1:
     t0 = time.time()
     fleaCount = simulateFleaCount(numFlea, t, x, jumpingProbability, Pl, Pr, 0)
     fleaCount_precombination = simulateFleaCount(numFlea, t, x, jumpingProbability, Pl, Pr, Precombination)
 
     print(f'Task 3: individual fleas simulated in {time.time() - t0:.1f} s')
+    fleaDensity_noRecomb = simulateFleaDensity(numFlea, t, x, jumpingProbability, Pl, Pr, 0)
     fleaDensity_field = simulateFleaDensity(numFlea, t, x, jumpingProbability, Pl, Pr, Precombination)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
     plotSnapshots(x, t, fleaCount, linestyle='--', label=False, ax=ax1)
-    plotSnapshots(x, t, fleaDensity_field, ax=ax1)
+    plotSnapshots(x, t, fleaDensity_noRecomb, ax=ax1)
+    ax1.plot([], [], 'k--', label='individual')
+    ax1.plot([], [], 'k-', label='average')
+    ax1.set_title('without recombination')
+    ax1.legend(fontsize=8)
 
     plotSnapshots(x, t, fleaCount_precombination, linestyle=':', label=False, ax=ax2)
     plotSnapshots(x, t, fleaDensity_field, ax=ax2)
+    ax2.plot([], [], 'k:', label='individual')
+    ax2.plot([], [], 'k-', label='average')
+    ax2.set_title(f'with recombination, tau_rec = {tau_recombination:.0e} s')
+    ax2.legend(fontsize=8)
 
-    plt.title('individual fleas (dashed) and statistical average (solid)')
-    plt.legend()
-    plt.show()
-    exit()
+    fig.suptitle('Individual fleas vs. statistical average')
+    fig.tight_layout()
+    save_fig(fig, "lab_04_exercise_3")
 
 
 # %% Task 4 -- constant injection from the left: short and long sample
@@ -396,12 +404,14 @@ Pl = Pr = 0.5
 tau_recombination = 5e-10
 Precombination = dt / tau_recombination
 
-if 0:
+if 1:
     fleaDensity_field = simulateInjection(numFlea, t, x, jumpingProbability, Pl, Pr, Precombination)
-    plt.figure()
+    fig = plt.figure()
     plotSnapshots(x, t, fleaDensity_field)
+    plt.title('Constant injection snapshots')
     plt.legend()
-    plt.show()
+    fig.tight_layout()
+    save_fig(fig, "lab_04_exercise_4_1")
 
 
 if 1:
@@ -414,21 +424,26 @@ if 1:
         fleaDensity_field = simulateInjection(numFlea, t, x, jumpingProbability, Pl, Pr, Precombination)
         # plotSnapshots(x, t, fleaDensity_field, ax=ax)
 
-        ax.plot(x * 1e9, fleaDensity_field[-1, :], label=f'T = {T_factor} τ')
-        ax.set_title(f'T = {T_factor}')
+        ax.plot(x * 1e9, fleaDensity_field[-1, :], label=rf'T = {T_factor} $\tau$')
 
-    plt.legend()
-    plt.show()
-    exit()
+    ax.set_xlabel('dog position x (nm)')
+    ax.set_ylabel('number of fleas on dog')
+    ax.set_title('Steady-state convergence for different durations T')
+    ax.legend()
+    fig.tight_layout()
+    save_fig(fig, "lab_04_exercise_4_2")
 
-if 0:
+T = tau * 5000
+t = np.arange(0, T, dt)
+
+if 1:
     tau_recomb_values = [2e-9, 5e-12]
 
     D = v_th**2 * tau / 2
     W = x[-1] - x[0]
     x_rel = x - x[0]
 
-    for tau_recomb in tau_recomb_values:
+    for idx, tau_recomb in enumerate(tau_recomb_values):
         precombination = dt / tau_recomb
 
         fleaDensity_field = simulateInjection(numFlea, t, x, jumpingProbability, Pl, Pr, precombination)
@@ -446,15 +461,25 @@ if 0:
         # print(difference)
         # ax.plot(x * 1e9, fleaDensity_field[-1, :], label=f'tau_rec = {tau_recomb:.1e} s')
 
-        plt.figure()
-        plt.plot(x * 1e9, fleaDensity_field[-1])
-        plt.plot(x * 1e9, analytical, label='Analytical')
-        plt.show()
+        fig_n = plt.figure()
+        plt.plot(x * 1e9, fleaDensity_field[-1], label='Numerical')
+        plt.plot(x * 1e9, analytical, '--', label='Analytical')
+        plt.xlabel('dog position x (nm)')
+        plt.ylabel('number of fleas on dog')
+        plt.title(rf'Steady-state density ($\tau_{{\mathrm{{rec}}}}$ = {tau_recomb:.1e} s)')
+        plt.legend()
+        fig_n.tight_layout()
+        save_fig(fig_n, f"lab_04_exercise_4_{2 * idx + 3}")
 
         current = jumpingProbability * Pr * fleaDensity_field[-1, :-1] - Pl * fleaDensity_field[-1, 1:]
-        plt.figure()
-        plt.plot(x[:-1] * 1e9, current)
-        plt.show()
+        fig_j = plt.figure()
+        plt.plot(x[:-1] * 1e9, current, label='Steady-state current')
+        plt.xlabel('dog position x (nm)')
+        plt.ylabel('current (a.u.)')
+        plt.title(rf'Steady-state current ($\tau_{{\mathrm{{rec}}}}$ = {tau_recomb:.1e} s)')
+        plt.legend()
+        fig_j.tight_layout()
+        save_fig(fig_j, f"lab_04_exercise_4_{2 * idx + 4}")
   
 
 # plt.figure()
